@@ -155,7 +155,7 @@ Contributors link their PR with any GitHub closing keyword: `Fixes #12`, `Closes
 
 ## Deploy on Render
 
-`render.yaml` is a Render Blueprint: **New > Blueprint**, pick the repo, enter the secrets.
+`render.yaml` is a Render Blueprint: **New > Blueprint**, pick the repo, enter the secrets. Render checks `GET /healthz` (no password needed) to know the app is up.
 
 > **The free plan is for demos only.** Its disk is wiped on every deploy, restart and idle sleep (about 15 minutes without traffic), and your bounties go with it. For real use, pick a paid instance, attach a disk and set `DB_PATH` to it. `render.yaml` shows how.
 
