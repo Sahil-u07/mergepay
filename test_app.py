@@ -332,3 +332,9 @@ def test_config_says_whether_money_is_real(env, monkeypatch):
     assert client.get("/api/config", auth=AUTH).json() == {"sandbox": True}
     monkeypatch.setattr(app, "PAYPAL_LIVE", True)
     assert client.get("/api/config", auth=AUTH).json() == {"sandbox": False}
+
+
+def test_health_check_needs_no_password(env):
+    client, _ = env
+    r = client.get("/healthz", auth=None)
+    assert r.status_code == 200 and r.json() == {"ok": True}
