@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="docs/logo.svg" alt="MergePay logo" width="96" height="96">
+
 # MergePay
 
 **Bounties without the spam.**
