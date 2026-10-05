@@ -1,0 +1,32 @@
+# Render Blueprint: New > Blueprint in the Render dashboard, then pick this repo.
+# Render asks for each sync: false value once, when the service is created.
+#
+# The free plan is for trying MergePay only: its disk is wiped on every deploy, restart and
+# idle sleep (~15 min), and the bounties go with it. For real use pick a paid plan, add a disk
+# and point DB_PATH at it, for example:
+#   plan: starter
+#   disk: {name: data, mountPath: /var/data, sizeGB: 1}
+#   envVars: - key: DB_PATH
+#              value: /var/data/mergepay.db
+services:
+  - type: web
+    name: mergepay
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PAYPAL_CLIENT_ID
+        sync: false
+      - key: PAYPAL_CLIENT_SECRET
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GITHUB_TOKEN
+        sync: false
+      - key: GITHUB_WEBHOOK_SECRET
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: AUTO_PAY_LIMIT
+        value: "50"
