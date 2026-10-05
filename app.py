@@ -201,6 +201,12 @@ EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 MAX_BOUNTY = Decimal("10000")
 
 
+@app.get("/healthz")
+def healthz():
+    """For Render's health check: no password, no secrets, no database writes."""
+    return {"ok": True}
+
+
 @app.get("/", dependencies=[Depends(admin)])
 def index():
     return FileResponse(Path(__file__).parent / "static" / "index.html")
