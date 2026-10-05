@@ -42,7 +42,7 @@ The video shows the real app paying for its own improvements: real Gemini review
 - The first visit can take about a minute while the free instance wakes up.
 - **Sign in with GitHub.** Open the menu (your avatar, or ☰ on a phone) › **Settings** to connect a repo you maintain or to add your PayPal email. Judges can also use **Use the admin password** with the password from the submission's testing notes, which shows everything.
 - The free plan wipes the database on every restart, so the dashboard may start empty. Create a bounty to see the flow, or run it locally with the fakes below.
-- If the Gemini free quota runs out, merged PRs wait for the maintainer with a `429` reason instead of being paid. Nothing is paid without a verdict.
+- If Gemini is overloaded or its free quota runs out, MergePay asks a backup model. If that one is down too, merged PRs wait for the maintainer with the reason instead of being paid. Nothing is paid without a verdict.
 
 ## How it works
 
@@ -152,7 +152,8 @@ Copy the **Client ID** and a new **client secret** into `GITHUB_CLIENT_ID` and `
 | `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET` | yes | developer.paypal.com > Apps & Credentials > Sandbox > Create App. The app's account must be a **business account in a country that can send Payouts** (the US works; some countries, like India, get `PAYOUT_NOT_AVAILABLE`) |
 | `PAYPAL_BASE_URL` | no | Unset means sandbox. `https://api-m.paypal.com` sends real money, and the dashboard then shows **PayPal LIVE** |
 | `GEMINI_API_KEY` | yes | aistudio.google.com > Get API key. The free tier has rate limits, and free-tier prompts may be used by Google, so prefer a paid key for private code |
-| `GEMINI_MODEL` | no | Default `gemini-3.8-flash`. Switch it if a model is overloaded or out of quota |
+| `GEMINI_MODEL` | no | Default `gemini-3.8-flash` |
+| `GEMINI_BACKUP_MODEL` | no | Default `gemini-2.5-flash`. Asked when the main model stays overloaded (`503`) or is out of its daily free quota (`429`, counted per model). Set it empty to turn the backup off |
 | `GITHUB_TOKEN` | yes | Fine-grained token with read access to **Issues** and **Pull requests** on your repos (public repos are always readable) |
 | `GITHUB_WEBHOOK_SECRET` | yes | Any long random string. Each connected repo's webhook secret is derived from it, so keep it the same |
 | `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | one of these two | Your GitHub OAuth App, for **Sign in with GitHub** (see above) |
