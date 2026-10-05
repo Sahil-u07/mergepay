@@ -487,11 +487,18 @@ async function refresh() {
   timer = setTimeout(refresh, bounties.some(b => b.status === "paying") ? 4000 : 15000);
 }
 
-document.querySelectorAll(".filters button").forEach(btn => btn.onclick = () => {
-  filter = btn.dataset.f;
+// The chosen filter survives a reload. Storage can be blocked (private windows), so every
+// access is wrapped and the dashboard falls back to "All".
+const FILTER_KEY = "mergepay.filter";
+function setFilter(f, save) {
+  const btn = document.querySelector(`.filters button[data-f="${f}"]`);
+  if (!btn) return;
+  filter = f;
   document.querySelectorAll(".filters button").forEach(x => x.setAttribute("aria-pressed", x === btn));
-  render();
-});
+  if (save) try { localStorage.setItem(FILTER_KEY, f); } catch {}
+}
+try { setFilter(localStorage.getItem(FILTER_KEY) || "all", false); } catch {}
+document.querySelectorAll(".filters button").forEach(btn => btn.onclick = () => { setFilter(btn.dataset.f, true); render(); });
 
 function onSubmit(form, path, msg, check, done) {
   form.onsubmit = async ev => {
