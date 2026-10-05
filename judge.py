@@ -12,8 +12,15 @@ from typing import Literal
 import httpx
 from pydantic import BaseModel, ConfigDict, ValidationError
 
-MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.8-flash")  # switch here if one model is overloaded
-URL = f"https://generativelanguage.googleapis.com/v1beta/models/{MODEL}:generateContent"
+MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.8-flash")
+# Gemini's free tier is often overloaded (503) or out of its daily quota (429, counted per
+# model). When the main model stays busy, the backup model gets the same request.
+BACKUP_MODEL = os.environ.get("GEMINI_BACKUP_MODEL", "gemini-2.5-flash")
+MODELS = list(dict.fromkeys(m for m in (MODEL, BACKUP_MODEL) if m))
+
+
+def url(model: str) -> str:
+    return f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 MAX_DIFF_CHARS = 60_000
 http = httpx.Client(timeout=120)
 
@@ -55,6 +62,22 @@ def _fence(text: str) -> str:
     return TAGS.sub("", text)
 
 
+def _ask(model: str, body: dict) -> httpx.Response:
+    """One model, a few tries: Gemini often answers 503 (overloaded) or 429 (rate limit), or
+    drops the connection, for a moment."""
+    for wait in (2, 5, 10, None):
+        try:
+            r = http.post(url(model), json=body, headers={"x-goog-api-key": os.environ["GEMINI_API_KEY"]})
+        except httpx.TransportError:
+            if wait is None:
+                raise
+            time.sleep(wait)
+            continue
+        if wait is None or (r.status_code != 429 and r.status_code < 500):
+            return r
+        time.sleep(wait)
+
+
 def judge(issue_title: str, issue_body: str, pr_title: str, pr_body: str, diff: str) -> Verdict:
     truncated = len(diff) > MAX_DIFF_CHARS
     issue_title, issue_body, pr_title, pr_body = map(_fence, (issue_title, issue_body, pr_title, pr_body))
@@ -70,23 +93,20 @@ def judge(issue_title: str, issue_body: str, pr_title: str, pr_body: str, diff: 
         "generationConfig": {"responseMimeType": "application/json",
                              "responseJsonSchema": Verdict.model_json_schema()},
     }
-    try:
-        # Gemini often answers 503 (overloaded) or 429 (rate limit), or drops the
-        # connection, for a moment, so retry those.
-        for wait in (2, 5, 10, None):
-            try:
-                r = http.post(URL, json=body, headers={"x-goog-api-key": os.environ["GEMINI_API_KEY"]})
-            except httpx.TransportError:
-                if wait is None:
-                    raise
-                time.sleep(wait)
-                continue
-            if wait is None or (r.status_code != 429 and r.status_code < 500):
-                break
-            time.sleep(wait)
-        r.raise_for_status()
-    except httpx.HTTPError as e:
-        raise JudgeError(f"AI service error: {e}")
+    error = None
+    for model in MODELS:
+        try:
+            r = _ask(model, body)
+            r.raise_for_status()
+            break
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code != 429 and e.response.status_code < 500:
+                raise JudgeError(f"AI service error: {e}")  # our request is wrong; another model won't fix it
+            error = e
+        except httpx.TransportError as e:
+            error = e
+    else:
+        raise JudgeError(f"AI service error: {error}")
     try:
         verdict = Verdict.model_validate_json(r.json()["candidates"][0]["content"]["parts"][0]["text"])
     except (KeyError, IndexError, ValidationError):
