@@ -135,7 +135,7 @@ Open http://127.0.0.1:8000. With GitHub sign-in set up (below), click **Sign in 
 On GitHub: **Settings > Developer settings > OAuth Apps > New OAuth App**.
 
 - **Homepage URL:** your `PUBLIC_URL`, for example `https://mergepay.onrender.com`
-- **Authorization callback URL:** `<PUBLIC_URL>/auth/callback` (locally `http://127.0.0.1:8000/auth/callback`; GitHub allows one callback per app, so use a second app for local work)
+- **Redirect URI:** `<PUBLIC_URL>/auth/callback`. To sign in locally too, add `http://127.0.0.1:8000/auth/callback` as a second redirect URI (GitHub allows up to 10). Leave wildcard matching, device flow and expiring tokens off.
 
 Copy the **Client ID** and a new **client secret** into `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET`. MergePay asks for no scopes: it reads the public profile and, with it, which public repos you maintain.
 
