@@ -14,7 +14,8 @@ services:
     runtime: python
     plan: free
     buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn app:app --host 0.0.0.0 --port $PORT
+    # Render terminates HTTPS; trusting its forwarded headers keeps sign-in callbacks on https.
+    startCommand: uvicorn app:app --host 0.0.0.0 --port $PORT --proxy-headers --forwarded-allow-ips "*"
     healthCheckPath: /healthz
     envVars:
       - key: PAYPAL_CLIENT_ID
@@ -26,6 +27,12 @@ services:
       - key: GITHUB_TOKEN
         sync: false
       - key: GITHUB_WEBHOOK_SECRET
+        sync: false
+      - key: GITHUB_CLIENT_ID
+        sync: false
+      - key: GITHUB_CLIENT_SECRET
+        sync: false
+      - key: PUBLIC_URL
         sync: false
       - key: ADMIN_PASSWORD
         sync: false
