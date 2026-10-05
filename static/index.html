@@ -168,17 +168,85 @@
   .log time { display: block; color: var(--faint); font: 12px var(--mono); }
 
   .empty { text-align: center; padding: 28px 16px; color: var(--muted); border: 1px dashed var(--line-strong); border-radius: 12px; }
-  .empty .icon { width: 28px; height: 28px; color: var(--faint); }
+  .empty > .icon { width: 28px; height: 28px; color: var(--faint); }
   .empty strong { display: block; color: var(--text); margin: 6px 0 2px; font-weight: 600; }
 
   footer { color: var(--faint); font-size: 12.5px; text-align: center; padding: 0 16px 28px; }
 
+  /* Account menu (desktop) and drawer (phones) */
+  .account { position: relative; display: flex; align-items: center; }
+  .acct-btn { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 4px 12px 4px 4px; border-radius: 999px;
+              border: 1px solid var(--line); background: var(--raised); color: var(--text); font: 500 14px var(--sans); cursor: pointer; }
+  .acct-btn:hover { border-color: var(--line-strong); }
+  .acct-btn .icon { width: 16px; height: 16px; color: var(--muted); }
+  .avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--idle-bg); color: var(--idle-fg); flex: none;
+            display: grid; place-items: center; font: 600 13px var(--sans); overflow: hidden; }
+  .avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .menu-btn, .icon-btn { width: 44px; height: 44px; display: none; place-items: center; border-radius: 10px; border: 1px solid var(--line);
+                         background: var(--raised); color: var(--text); cursor: pointer; }
+  .icon-btn { display: grid; background: transparent; }
+  .acct-menu { position: absolute; right: 0; top: calc(100% + 8px); width: 270px; background: var(--card); border: 1px solid var(--line-strong);
+               border-radius: 12px; padding: 6px; box-shadow: 0 18px 44px rgba(0,0,0,.35); z-index: 50; }
+  .menu-who { padding: 10px 12px 12px; border-bottom: 1px solid var(--line); margin-bottom: 6px; font-size: 13px; color: var(--muted); }
+  .menu-who b { display: block; color: var(--text); font-size: 15px; font-weight: 600; overflow-wrap: anywhere; }
+  .nav-item { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px; padding: 10px 12px; border-radius: 8px; border: 0;
+              background: transparent; color: var(--text); font: 500 14.5px var(--sans); text-decoration: none; cursor: pointer; text-align: left; }
+  .nav-item:hover { background: var(--raised); }
+  .nav-item[aria-current="page"] { background: var(--raised); box-shadow: inset 3px 0 0 var(--ok); }
+  .nav-item.danger { color: var(--bad-fg); }
+  .nav-sep { height: 1px; background: var(--line); margin: 6px 0; }
+  .backdrop { position: fixed; inset: 0; background: rgba(2,6,23,.62); z-index: 60; }
+  .drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(320px, 86vw); background: var(--card); border-left: 1px solid var(--line);
+            z-index: 70; padding: 14px; display: flex; flex-direction: column; gap: 4px; overflow-y: auto; animation: slide .22s ease-out; }
+  @keyframes slide { from { transform: translateX(100%); } }
+  .drawer-head { display: flex; align-items: center; gap: 10px; padding-bottom: 12px; border-bottom: 1px solid var(--line); margin-bottom: 6px; }
+  .drawer-head .menu-who { border: 0; padding: 0; margin: 0; flex: 1; min-width: 0; }
+
+  /* Settings and payouts */
+  .view-head { margin-bottom: 18px; }
+  .view-head h2 { margin: 0; font-size: 22px; font-weight: 600; }
+  .view-head p { margin: 4px 0 0; color: var(--muted); }
+  .settings-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr); gap: 20px; align-items: start; }
+  .profile { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+  .profile .avatar { width: 48px; height: 48px; font-size: 16px; }
+  .profile b { display: block; font-size: 16px; }
+  .repo { background: var(--raised); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; gap: 14px; min-width: 0; }
+  .repo-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .repo-head .b-title { margin-right: auto; }
+  .sub { margin: 0 0 6px; font-size: 12.5px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+  .hook { display: grid; gap: 8px; margin: 8px 0 0; font-size: 13.5px; }
+  .hook > div { display: grid; grid-template-columns: 112px minmax(0, 1fr) auto; gap: 8px; align-items: center; }
+  .hook dt { color: var(--muted); }
+  .hook dd { margin: 0; font: 12.5px var(--mono); overflow-wrap: anywhere; }
+  .hook .acts { display: flex; gap: 6px; }
+  button.btn.mini { min-height: 36px; padding: 6px 10px; font-size: 13px; border-radius: 8px; }
+  button.btn.mini .icon { width: 15px; height: 15px; }
+  .inline { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
+  .inline .field { flex: 1 1 180px; }
+  .callout { display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; padding: 12px 14px;
+             border-radius: 10px; background: var(--raised); border: 1px solid var(--line); font-size: 14px; overflow-wrap: anywhere; }
+  .stack { display: grid; gap: 12px; margin-top: 14px; }
+  .empty .actions { justify-content: center; }
+  [hidden] { display: none !important; }
+
   @media (max-width: 1023px) {
+    .settings-grid { grid-template-columns: minmax(0, 1fr); }
     .grid { grid-template-columns: minmax(0, 1fr); }
     .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   }
+  @media (max-width: 767px) {
+    .acct-btn { display: none; }
+    .menu-btn { display: grid; }
+    #live { display: none; }
+    header .wrap { gap: 10px; flex-wrap: nowrap; }
+    .brand { min-width: 0; }
+    .brand small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .wide-only { display: none; }
+  }
   @media (max-width: 520px) {
+    .hook > div { grid-template-columns: minmax(0, 1fr) auto; }
+    .hook dt { grid-column: 1 / -1; }
     .steps { display: none; }
     .kpi strong { font-size: 20px; }
     .row { grid-template-columns: minmax(0, 1fr) 84px; }
@@ -187,7 +255,7 @@
     .filters { margin-left: 0; }
     .actions .btn { flex: 1 1 auto; }
   }
-  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 </style>
 </head>
 <body>
@@ -197,13 +265,23 @@
       <div class="logo" aria-hidden="true"><span data-icon="merge"></span></div>
       <div><b>MergePay</b><small>Bounties without the spam</small></div>
     </div>
-    <span id="mode" class="pill sandbox" title="Payouts go to the PayPal sandbox. No real money moves.">PayPal sandbox</span>
+    <span id="mode" class="pill sandbox" title="Payouts go to the PayPal sandbox. No real money moves."><span class="wide-only">PayPal</span>sandbox</span>
     <span id="live" class="pill status" role="status"><span class="dot"></span><span id="liveText">Connecting</span></span>
+    <div class="account" id="account" hidden>
+      <button type="button" class="acct-btn" id="acctBtn" aria-haspopup="true" aria-expanded="false" aria-controls="acctMenu">
+        <span class="avatar" id="acctAvatar" aria-hidden="true"></span><span id="acctName">Account</span><span data-icon="chevron"></span>
+      </button>
+      <button type="button" class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="drawer"><span data-icon="menu"></span></button>
+      <div class="acct-menu" id="acctMenu" hidden></div>
+    </div>
   </div>
 </header>
+<div class="backdrop" id="backdrop" hidden></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-label="Menu" hidden></aside>
 
 <main class="wrap">
-  <h1 class="sr-only">MergePay maintainer dashboard</h1>
+  <h1 class="sr-only">MergePay dashboard</h1>
+  <section id="viewDash" aria-label="Dashboard">
   <ol class="steps" aria-label="How MergePay works">
     <li><span data-icon="plus"></span><span><b>Post a bounty</b>on any GitHub issue</span></li>
     <li><span data-icon="merge"></span><span><b>Merge the fix</b>PR says "Fixes #N"</span></li>
@@ -251,8 +329,10 @@
         <div class="panel-head"><h2 id="newTitle">New bounty</h2></div>
         <form id="bountyForm" novalidate>
           <div class="field">
-            <label for="fRepo">Repository</label>
+            <label for="fRepo" id="fRepoLabel">Repository</label>
             <input id="fRepo" name="repo" placeholder="owner/name" autocomplete="off" required spellcheck="false">
+            <select id="fRepoSel" name="repo" hidden disabled></select>
+            <p class="hint" id="repoHint" hidden>Connect a repository in <a href="#/settings">Settings</a> first.</p>
           </div>
           <div class="row">
             <div class="field"><label for="fIssue">Issue number</label>
@@ -267,7 +347,13 @@
         </form>
       </section>
 
-      <section class="panel" aria-labelledby="emailTitle">
+      <section class="panel" id="myEmailPanel" hidden aria-labelledby="myEmailTitle">
+        <div class="panel-head"><h2 id="myEmailTitle">Your payout email</h2></div>
+        <div class="callout"><span id="myEmailText"></span>
+          <button type="button" class="btn mini" data-go="#/settings">Edit in Settings</button></div>
+      </section>
+
+      <section class="panel" id="contribPanel" hidden aria-labelledby="emailTitle">
         <div class="panel-head"><h2 id="emailTitle">Contributor PayPal email</h2></div>
         <form id="contribForm" novalidate>
           <div class="field"><label for="fLogin">GitHub username</label>
@@ -286,6 +372,47 @@
       </section>
     </div>
   </div>
+  </section>
+
+  <section id="viewSettings" hidden aria-labelledby="settingsTitle">
+    <div class="view-head"><h2 id="settingsTitle" tabindex="-1">Settings</h2>
+      <p id="settingsLead">Where you're paid, and the repositories you post bounties on.</p></div>
+    <div class="settings-grid">
+      <section class="panel" id="profilePanel" aria-labelledby="profTitle">
+        <div class="panel-head"><h2 id="profTitle">Profile and payouts</h2></div>
+        <div class="profile"><span class="avatar" id="profAvatar" aria-hidden="true"></span>
+          <div><b id="profLogin"></b><span class="hint">Signed in with GitHub</span></div></div>
+        <form id="paypalForm" novalidate>
+          <div class="field"><label for="fMyEmail">PayPal email for your payouts</label>
+            <input id="fMyEmail" name="paypal_email" type="email" placeholder="name@example.com" autocomplete="email" required></div>
+          <button class="btn primary" type="submit"><span data-icon="mail"></span>Save email</button>
+          <p class="hint">When a maintainer merges your fix, the bounty is sent to this email through PayPal.</p>
+          <p class="msg" id="myEmailMsg" role="status"></p>
+        </form>
+      </section>
+
+      <section class="panel" aria-labelledby="reposTitle">
+        <div class="panel-head"><h2 id="reposTitle">Repositories</h2><span class="count" id="repoCount">0</span>
+          <p>Connect a repository you maintain on GitHub, then add its webhook so MergePay hears about merged pull requests.</p></div>
+        <form id="repoForm" class="inline" novalidate>
+          <div class="field"><label for="fConnect">Repository</label>
+            <input id="fConnect" name="full_name" placeholder="owner/name" autocomplete="off" spellcheck="false" required></div>
+          <button class="btn primary" type="submit"><span data-icon="link"></span>Connect</button>
+        </form>
+        <p class="msg" id="repoMsg" role="status"></p>
+        <div class="stack" id="repoList"></div>
+      </section>
+    </div>
+  </section>
+
+  <section id="viewPayouts" hidden aria-labelledby="payoutsTitle">
+    <div class="view-head"><h2 id="payoutsTitle" tabindex="-1">Your payouts</h2>
+      <p>Bounties paid, or waiting to be paid, to you for fixes you got merged.</p></div>
+    <section class="panel" aria-label="Payouts">
+      <div class="callout" id="payoutEmail"></div>
+      <div class="stack" id="payoutList"></div>
+    </section>
+  </section>
 </main>
 <footer>Money rules live in code, not in the AI: spending limit, maintainer approval and one payment per bounty.</footer>
 <div class="sr-only" aria-live="polite" id="announce"></div>
@@ -294,10 +421,19 @@
 // Everything from the server goes into the page with textContent: PR titles, verdicts and
 // usernames can come from GitHub users, so they must never be parsed as HTML.
 const $ = id => document.getElementById(id);
-let bounties = [], filter = "all", lastStatus = {}, timer;
+let bounties = [], filter = "all", lastStatus = {}, timer, me = null;
 
 // Icons: Lucide-style outlines, built as SVG nodes.
 const ICONS = {
+  menu: [["path", "M4 12h16M4 6h16M4 18h16"]],
+  chevron: [["path", "m6 9 6 6 6-6"]],
+  sliders: [["path", "M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M14 2v4M8 10v4M16 18v4"]],
+  logout: [["path", "M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"]],
+  layout: [["rect", 3, 3, 7, 9, 1], ["rect", 14, 3, 7, 5, 1], ["rect", 14, 12, 7, 9, 1], ["rect", 3, 16, 7, 5, 1]],
+  copy: [["rect", 8, 8, 14, 14, 2], ["path", "M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"]],
+  eye: [["path", "M2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 19.88 0 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-19.88 0"], ["circle", 12, 12, 3]],
+  link: [["path", "M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"]],
+  trash: [["path", "M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"]],
   merge: [["circle", 18, 18, 3], ["circle", 6, 6, 3], ["path", "M6 21V9a9 9 0 0 0 9 9"]],
   pr: [["circle", 18, 18, 3], ["circle", 6, 6, 3], ["path", "M13 6h3a2 2 0 0 1 2 2v7M6 9v12"]],
   plus: [["path", "M5 12h14M12 5v14"]],
@@ -328,9 +464,10 @@ function icon(name) {
 }
 document.querySelectorAll("[data-icon]").forEach(n => n.replaceWith(icon(n.dataset.icon)));
 
-async function api(path, body) {
-  const r = await fetch(path, body === undefined ? {} : {
-    method: "POST", headers: {"Content-Type": "application/json", "X-MergePay": "1"}, body: JSON.stringify(body)});
+async function api(path, body, method = body === undefined ? "GET" : "POST") {
+  const r = await fetch(path, method === "GET" ? {} : {
+    method, headers: {"Content-Type": "application/json", "X-MergePay": "1"}, body: JSON.stringify(body ?? {})});
+  if (r.status === 401) { location.href = "/signin"; throw new Error("Sign in first."); }
   const data = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error(typeof data.detail === "string" ? data.detail : "Check the form and try again.");
   return data;
@@ -398,8 +535,8 @@ function bountyCard(b) {
     v && verdictBlock(v),
     waiting && b.reasons.length > 0 && el("p", {className: "reasons-title", textContent: "Why it's waiting"}),
     waiting && b.reasons.length > 0 && el("ul", {className: "reasons"}, ...b.reasons.map(r => el("li", {textContent: r}))),
-    waiting && actions(b),
-    b.status === "rejected" && el("div", {className: "actions"},
+    waiting && b.can_manage !== false && actions(b),
+    b.status === "rejected" && b.can_manage !== false && el("div", {className: "actions"},
       button([icon("undo"), "Reopen for the next fix"], "", () => act(b, "reopen"))));
 }
 
@@ -416,8 +553,22 @@ function actions(b) {
   return el("div", {className: "actions"}, pay, reject);
 }
 
-function empty(title, text) {
-  return el("div", {className: "empty"}, icon("inbox"), el("strong", {textContent: title}), text);
+function empty(title, text, ...actions) {
+  return el("div", {className: "empty"}, icon("inbox"), el("strong", {textContent: title}), text,
+    actions.length > 0 && el("div", {className: "actions"}, ...actions));
+}
+
+// A button that opens another view (Settings, Your payouts) through the hash router.
+function goBtn(ic, label, hash, cls = "") {
+  const b = el("button", {type: "button", className: "btn " + cls}, icon(ic), label);
+  b.dataset.go = hash;
+  return b;
+}
+
+function firstRun() {
+  return empty("Welcome to MergePay",
+    "Connect a repository you maintain to post bounties on its issues, or add your PayPal email to get paid for fixes.",
+    goBtn("link", "Connect a repository", "#/settings", "primary"), goBtn("mail", "Add your PayPal email", "#/settings"));
 }
 
 function render() {
@@ -440,7 +591,9 @@ function render() {
   $("allCount").textContent = rest.length;
   $("list").replaceChildren(...(shown.length ? shown.map(bountyCard)
     : [bounties.length ? empty("Nothing with this status", "Pick another filter to see the rest.")
-                       : empty("Post your first bounty", "Add one with the form. It's paid when a PR that fixes the issue is merged.")]));
+       : me && !me.operator && !me.repos.length ? firstRun()
+       : empty("Post your first bounty", "Add one with the form. It's paid when a PR that fixes the issue is merged.")]));
+  if (me && !$("viewPayouts").hidden) renderPayouts();
 }
 
 function announceChanges() {
@@ -500,31 +653,266 @@ function setFilter(f, save) {
 try { setFilter(localStorage.getItem(FILTER_KEY) || "all", false); } catch {}
 document.querySelectorAll(".filters button").forEach(btn => btn.onclick = () => { setFilter(btn.dataset.f, true); render(); });
 
-function onSubmit(form, path, msg, check, done) {
+function onSubmit(form, path, msg, check, done, after = refresh) {
   form.onsubmit = async ev => {
     ev.preventDefault();
     const btn = form.querySelector("button"), data = Object.fromEntries(new FormData(form));
     const problem = check(data);
     if (problem) { say(msg, "bad", problem); return; }
     btn.setAttribute("aria-busy", "true");
-    try { await api(path, data); say(msg, "ok", done(data)); form.reset(); refresh(); }
+    try { await api(path, data); say(msg, "ok", done(data)); form.reset(); await after(); }
     catch (e) { say(msg, "bad", e.message); }
     finally { btn.removeAttribute("aria-busy"); }
   };
   form.oninput = () => { msg.textContent = ""; };
 }
+const EMAIL = /^[^@\s]+@[^@\s]+\.[^@\s]+$/, REPO = /^[\w.-]+\/[\w.-]+$/;
 onSubmit($("bountyForm"), "/api/bounties", $("bountyMsg"),
-  d => !/^[\w.-]+\/[\w.-]+$/.test(d.repo.trim()) ? "Enter the repository as owner/name."
+  d => !d.repo ? "Connect a repository in Settings first."
+     : !REPO.test(d.repo.trim()) ? "Enter the repository as owner/name."
      : !/^\d+$/.test(d.issue.trim()) ? "Enter the issue number, like 12."
      : !/^\d+(\.\d{1,2})?$/.test(d.amount.trim()) ? "Enter an amount like 40 or 40.00." : "",
   d => `Bounty added to ${d.repo}#${d.issue}.`);
 onSubmit($("contribForm"), "/api/contributors", $("contribMsg"),
-  d => !d.github_login.trim() ? "Enter a GitHub username." : !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(d.paypal_email) ? "Enter a valid email." : "",
+  d => !d.github_login.trim() ? "Enter a GitHub username." : !EMAIL.test(d.paypal_email) ? "Enter a valid email." : "",
   d => `Saved the PayPal email for ${d.github_login}.`);
+onSubmit($("paypalForm"), "/api/me/paypal", $("myEmailMsg"),
+  d => !EMAIL.test(d.paypal_email.trim()) ? "Enter a valid email, like name@example.com." : "",
+  d => `Saved. Your bounties will be paid to ${d.paypal_email.trim()}.`, loadMe);
+onSubmit($("repoForm"), "/api/repos", $("repoMsg"),
+  d => !REPO.test(d.full_name.trim()) ? "Enter the repository as owner/name." : "",
+  d => `Connected ${d.full_name.trim()}. Add the webhook below to finish.`, async () => { await loadMe(); refresh(); });
+
+// ---------- Account: who's signed in, menu (desktop) and drawer (phones) ----------
+
+function avatar(node) {
+  node.replaceChildren();
+  if (me.avatar_url) node.append(el("img", {src: me.avatar_url, alt: ""}));
+  else node.textContent = me.operator ? "OP" : (me.login || "?")[0].toUpperCase();
+}
+
+function navItems() {
+  const items = [{href: "#/", label: "Dashboard", icon: "layout"}];
+  if (me.operator) items.push({href: "#/settings", label: "Repositories", icon: "sliders"});
+  else items.push({href: "#/settings", label: "Settings", icon: "sliders"}, {href: "#/payouts", label: "Your payouts", icon: "wallet"});
+  return items;
+}
+
+function buildNav(inDrawer) {
+  const who = el("div", {className: "menu-who"},
+    me.operator ? "Signed in with the admin password" : "Signed in as",
+    el("b", {textContent: me.operator ? "Operator" : me.login}));
+  const links = navItems().map(i => {
+    const a = el("a", {className: "nav-item", href: i.href}, icon(i.icon), i.label);
+    a.dataset.route = i.href;
+    return a;
+  });
+  const out = [];
+  if (inDrawer) {
+    const av = el("span", {className: "avatar", ariaHidden: "true"});
+    const close = el("button", {type: "button", className: "icon-btn", ariaLabel: "Close menu"}, icon("x"));
+    close.onclick = () => closeMenus();
+    out.push(el("div", {className: "drawer-head"}, av, who, close));
+    setTimeout(() => avatar(av));
+  } else {
+    out.push(who);
+  }
+  out.push(el("nav", {ariaLabel: "Account"}, ...links));
+  if (!me.operator) {
+    const signOut = el("button", {type: "button", className: "nav-item danger"}, icon("logout"), "Sign out");
+    signOut.onclick = async () => { try { await api("/auth/logout", {}); } finally { location.href = "/signin"; } };
+    out.push(el("div", {className: "nav-sep"}), signOut);
+  }
+  return out;
+}
+
+function focusables(root) {
+  return [...root.querySelectorAll("a[href], button:not([disabled]), input, select")].filter(n => n.offsetParent !== null);
+}
+
+function openMenu() {
+  $("acctMenu").hidden = false;
+  $("acctBtn").setAttribute("aria-expanded", "true");
+  focusables($("acctMenu"))[0]?.focus();
+}
+
+function openDrawer() {
+  $("drawer").hidden = false; $("backdrop").hidden = false;
+  $("menuBtn").setAttribute("aria-expanded", "true");
+  document.body.style.overflow = "hidden";
+  (focusables($("drawer")).find(n => n.classList.contains("nav-item")) || $("drawer")).focus();
+}
+
+function closeMenus(restoreFocus = true) {
+  const wasDrawer = !$("drawer").hidden, wasMenu = !$("acctMenu").hidden;
+  $("acctMenu").hidden = true; $("drawer").hidden = true; $("backdrop").hidden = true;
+  $("acctBtn").setAttribute("aria-expanded", "false"); $("menuBtn").setAttribute("aria-expanded", "false");
+  document.body.style.overflow = "";
+  if (restoreFocus && wasDrawer) $("menuBtn").focus();
+  else if (restoreFocus && wasMenu) $("acctBtn").focus();
+}
+
+$("acctBtn").onclick = () => $("acctMenu").hidden ? openMenu() : closeMenus();
+$("menuBtn").onclick = openDrawer;
+$("backdrop").onclick = () => closeMenus();
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape" && (!$("drawer").hidden || !$("acctMenu").hidden)) { e.preventDefault(); closeMenus(); return; }
+  if (e.key === "Tab" && !$("drawer").hidden) {  // keep focus inside the open drawer
+    const f = focusables($("drawer")), first = f[0], last = f[f.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  }
+});
+document.addEventListener("click", e => {
+  const go = e.target.closest("[data-go]");
+  if (go) { location.hash = go.dataset.go; return; }
+  if (!$("acctMenu").hidden && !$("account").contains(e.target)) closeMenus(false);
+});
+
+// ---------- Views: #/ dashboard, #/settings, #/payouts (Back works, links can be shared) ----------
+
+const VIEWS = {"#/": "viewDash", "#/settings": "viewSettings", "#/payouts": "viewPayouts"};
+function route(moveFocus = false) {
+  let key = VIEWS[location.hash] ? location.hash : "#/";
+  if (me && me.operator && key === "#/payouts") key = "#/";
+  for (const [hash, id] of Object.entries(VIEWS)) $(id).hidden = hash !== key;
+  document.querySelectorAll(".nav-item[data-route]").forEach(a =>
+    a.dataset.route === key ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current"));
+  closeMenus(false);
+  if (key === "#/settings") renderSettings();
+  if (key === "#/payouts") renderPayouts();
+  if (moveFocus) (key === "#/" ? $("listTitle") : $(VIEWS[key]).querySelector("h2")).focus?.();
+}
+window.addEventListener("hashchange", () => route(true));
+$("listTitle").tabIndex = -1;
+
+function setupRepoField() {
+  const user = !me.operator, sel = $("fRepoSel"), input = $("fRepo");
+  input.hidden = user; input.disabled = user;
+  sel.hidden = !user; sel.disabled = !user || !me.repos.length;
+  $("repoHint").hidden = !user || me.repos.length > 0;
+  $("fRepoLabel").htmlFor = user ? "fRepoSel" : "fRepo";
+  if (user) {
+    const keep = sel.value;
+    sel.replaceChildren(...me.repos.map(r => el("option", {value: r.full_name, textContent: r.full_name})));
+    if (me.repos.some(r => r.full_name === keep)) sel.value = keep;
+  }
+}
+
+async function loadMe() {
+  me = await api("/api/me");
+  $("account").hidden = false;
+  avatar($("acctAvatar"));
+  $("acctName").textContent = me.operator ? "Operator" : me.login;
+  $("acctMenu").replaceChildren(...buildNav(false));
+  $("drawer").replaceChildren(...buildNav(true));
+  $("contribPanel").hidden = !me.operator;
+  $("myEmailPanel").hidden = me.operator;
+  $("myEmailText").textContent = me.paypal_email ? `Bounties you earn are paid to ${me.paypal_email}.`
+                                                 : "Not set yet. Add it so maintainers can pay you.";
+  setupRepoField();
+  route();
+  render();
+}
+
+// ---------- Settings ----------
+
+async function copy(text) {
+  try { await navigator.clipboard.writeText(text); }
+  catch {
+    const t = el("textarea", {value: text}); document.body.append(t); t.select(); document.execCommand("copy"); t.remove();
+  }
+}
+
+function hookRow(label, value, ...buttons) {
+  return el("div", {}, el("dt", {textContent: label}), value, el("span", {className: "acts"}, ...buttons));
+}
+
+async function loadHook(r, dl, msg) {
+  try {
+    const h = await api(`/api/repos/${r.id}/webhook`);
+    const dots = "•".repeat(24), secret = el("dd", {textContent: dots}), showLabel = el("span", {textContent: "Show"});
+    let shown = false;
+    const show = button([icon("eye"), showLabel], "mini", () => {
+      shown = !shown;
+      secret.textContent = shown ? h.secret : dots;
+      showLabel.textContent = shown ? "Hide" : "Show";
+    });
+    const copyBtn = (text, what) => button([icon("copy"), "Copy"], "mini", async () => { await copy(text); say(msg, "ok", `${what} copied.`); });
+    dl.replaceChildren(
+      hookRow("Payload URL", el("dd", {textContent: h.payload_url}), copyBtn(h.payload_url, "Payload URL")),
+      hookRow("Content type", el("dd", {textContent: h.content_type})),
+      hookRow("Secret", secret, show, copyBtn(h.secret, "Secret")),
+      hookRow("Events", el("dd", {textContent: "Let me select individual events › Pull requests"})));
+  } catch (e) { say(msg, "bad", e.message); }
+}
+
+function repoCard(r) {
+  const msg = el("p", {className: "msg", role: "status"}), hook = el("dl", {className: "hook"});
+  const limit = el("input", {id: `limit${r.id}`, name: "auto_pay_limit", inputMode: "decimal",
+                             placeholder: `${me.auto_pay_cap} (default)`, value: r.auto_pay_limit || ""});
+  const limitForm = el("form", {className: "inline", noValidate: true},
+    el("div", {className: "field"},
+      el("label", {htmlFor: limit.id, textContent: `Auto-pay limit (0 to ${me.auto_pay_cap})`}), limit),
+    el("button", {type: "submit", className: "btn mini"}, "Save limit"));
+  limitForm.onsubmit = async ev => {
+    ev.preventDefault();
+    const v = limit.value.trim();
+    if (v && !/^\d+(\.\d{1,2})?$/.test(v)) return say(msg, "bad", "Enter an amount like 20 or 20.00, or leave it empty for the default.");
+    try {
+      const res = await api(`/api/repos/${r.id}/limit`, {auto_pay_limit: v || null});
+      r.auto_pay_limit = res.auto_pay_limit;
+      say(msg, "ok", v ? `Bounties up to ${res.auto_pay_limit} are paid without a click when the AI is confident.`
+                       : `Using the server default of ${me.auto_pay_cap}.`);
+    } catch (e) { say(msg, "bad", e.message); }
+  };
+  const disconnect = button([icon("trash"), "Disconnect"], "danger mini", async () => {
+    if (!confirm(`Disconnect ${r.full_name}? Its bounties stay in the history, but you'll stop seeing them here.`)) return;
+    try { await api(`/api/repos/${r.id}`, undefined, "DELETE"); await loadMe(); refresh(); }
+    catch (e) { say(msg, "bad", e.message); }
+  });
+  loadHook(r, hook, msg);
+  return el("article", {className: "repo"},
+    el("div", {className: "repo-head"},
+      el("span", {className: "b-title"}, link(r.full_name, `https://github.com/${r.full_name}`)), disconnect),
+    el("div", {},
+      el("p", {className: "sub", textContent: "Webhook on GitHub"}),
+      el("p", {className: "hint"}, "Open ", link("Settings › Webhooks › Add webhook", `https://github.com/${r.full_name}/settings/hooks/new`),
+         " for this repository and enter:"),
+      hook),
+    limitForm, msg);
+}
+
+function renderSettings() {
+  $("profilePanel").hidden = me.operator;
+  $("repoForm").hidden = me.operator;
+  $("settingsLead").textContent = me.operator ? "Every repository connected to this MergePay server."
+                                              : "Where you're paid, and the repositories you post bounties on.";
+  if (!me.operator) {
+    avatar($("profAvatar"));
+    $("profLogin").textContent = me.login;
+    if (document.activeElement !== $("fMyEmail")) $("fMyEmail").value = me.paypal_email || "";
+  }
+  $("repoCount").textContent = me.repos.length;
+  $("repoList").replaceChildren(...(me.repos.length ? me.repos.map(repoCard)
+    : [empty("No repositories yet", me.operator ? "Maintainers connect theirs after signing in with GitHub."
+                                                : "Connect one you maintain on GitHub to post bounties on its issues.")]));
+}
+
+function renderPayouts() {
+  if (!me || me.operator) return;
+  const mine = bounties.filter(b => (b.contributor || "").toLowerCase() === me.login.toLowerCase());
+  $("payoutEmail").replaceChildren(
+    el("span", {textContent: me.paypal_email ? `Payouts go to ${me.paypal_email}.` : "Add your PayPal email so maintainers can pay you."}),
+    goBtn("mail", me.paypal_email ? "Change" : "Add email", "#/settings", "mini"));
+  $("payoutList").replaceChildren(...(mine.length ? mine.map(bountyCard)
+    : [empty("No payouts yet", "When a maintainer merges your fix for an issue with a bounty, it shows up here.")]));
+}
 
 api("/api/config").then(c => {
   if (!c.sandbox) Object.assign($("mode"), {className: "pill livemoney", textContent: "PayPal LIVE", title: "Payouts send real money."});
 }).catch(() => {});
+loadMe().catch(() => {});
 refresh();
 </script>
 </body>

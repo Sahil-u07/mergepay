@@ -39,6 +39,28 @@ CREATE TABLE IF NOT EXISTS events (
     at TEXT NOT NULL DEFAULT (datetime('now')),
     message TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY,
+    github_id INTEGER NOT NULL UNIQUE,  -- never changes, unlike the login
+    login TEXT NOT NULL,
+    avatar_url TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE TABLE IF NOT EXISTS sessions (
+    token_hash TEXT PRIMARY KEY,        -- sha256 of the cookie value
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    github_token TEXT,                  -- no-scope OAuth token, used only to check repo permissions
+    created_at REAL NOT NULL,
+    expires_at REAL NOT NULL
+);
+CREATE TABLE IF NOT EXISTS repos (
+    id INTEGER PRIMARY KEY,
+    full_name TEXT NOT NULL UNIQUE,     -- lowercase "owner/name", like bounties.repo
+    github_repo_id INTEGER NOT NULL UNIQUE,
+    owner_user_id INTEGER NOT NULL REFERENCES users(id),
+    auto_pay_limit TEXT,                -- Decimal as text; NULL = the server's AUTO_PAY_LIMIT
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
 """
 
 # Web requests and background reviews run on different threads but share one connection.
@@ -170,3 +192,94 @@ def bounties(conn) -> list[dict]:
 @locked
 def events(conn, limit: int = 100) -> list[dict]:
     return [dict(r) for r in conn.execute("SELECT * FROM events ORDER BY id DESC LIMIT ?", (limit,))]
+
+
+# ---------- Accounts ----------
+
+@locked
+def upsert_user(conn, github_id: int, login: str, avatar_url: str | None) -> int:
+    with conn:
+        conn.execute("INSERT INTO users (github_id, login, avatar_url) VALUES (?, ?, ?) ON CONFLICT (github_id) "
+                     "DO UPDATE SET login = excluded.login, avatar_url = excluded.avatar_url",
+                     (github_id, login, avatar_url))
+    return conn.execute("SELECT id FROM users WHERE github_id = ?", (github_id,)).fetchone()["id"]
+
+
+@locked
+def create_session(conn, token_hash: str, user_id: int, github_token: str, now: float, expires_at: float) -> None:
+    with conn:
+        conn.execute("INSERT INTO sessions VALUES (?, ?, ?, ?, ?)", (token_hash, user_id, github_token, now, expires_at))
+
+
+@locked
+def session_user(conn, token_hash: str, now: float) -> dict | None:
+    row = conn.execute("SELECT u.*, s.github_token FROM sessions s JOIN users u ON u.id = s.user_id "
+                       "WHERE s.token_hash = ? AND s.expires_at > ?", (token_hash, now)).fetchone()
+    return dict(row) if row else None
+
+
+@locked
+def delete_session(conn, token_hash: str) -> None:
+    with conn:
+        conn.execute("DELETE FROM sessions WHERE token_hash = ?", (token_hash,))
+
+
+@locked
+def add_repo(conn, full_name: str, github_repo_id: int, owner_user_id: int) -> int:
+    """Raises sqlite3.IntegrityError if the repo is already connected."""
+    with conn:
+        cur = conn.execute("INSERT INTO repos (full_name, github_repo_id, owner_user_id) VALUES (?, ?, ?)",
+                           (full_name.lower(), github_repo_id, owner_user_id))
+    return cur.lastrowid
+
+
+@locked
+def repos(conn, owner_user_id: int | None = None) -> list[dict]:
+    """Repos one user connected, or all of them (operator)."""
+    sql = "SELECT id, full_name, github_repo_id, owner_user_id, auto_pay_limit FROM repos"
+    args = ()
+    if owner_user_id is not None:
+        sql, args = sql + " WHERE owner_user_id = ?", (owner_user_id,)
+    return [dict(r) for r in conn.execute(sql + " ORDER BY full_name", args)]
+
+
+@locked
+def get_repo(conn, repo_id: int) -> dict | None:
+    row = conn.execute("SELECT * FROM repos WHERE id = ?", (repo_id,)).fetchone()
+    return dict(row) if row else None
+
+
+@locked
+def repo_by_name(conn, full_name: str) -> dict | None:
+    row = conn.execute("SELECT * FROM repos WHERE full_name = ?", (full_name.lower(),)).fetchone()
+    return dict(row) if row else None
+
+
+@locked
+def set_repo_limit(conn, repo_id: int, limit: str | None) -> None:
+    with conn:
+        conn.execute("UPDATE repos SET auto_pay_limit = ? WHERE id = ?", (limit, repo_id))
+
+
+@locked
+def delete_repo(conn, repo_id: int) -> None:
+    with conn:
+        conn.execute("DELETE FROM repos WHERE id = ?", (repo_id,))
+
+
+@locked
+def bounties_for_user(conn, user_id: int, login: str) -> list[dict]:
+    """Bounties on the user's repos, plus the ones they are the contributor on."""
+    return [dict(r) for r in conn.execute(
+        "SELECT b.*, c.paypal_email FROM bounties b "
+        "LEFT JOIN contributors c ON c.github_login = b.contributor "
+        "WHERE b.repo IN (SELECT full_name FROM repos WHERE owner_user_id = ?) OR lower(b.contributor) = lower(?) "
+        "ORDER BY b.id DESC", (user_id, login))]
+
+
+@locked
+def events_for(conn, bounty_ids: list[int], login: str, limit: int = 100) -> list[dict]:
+    marks = ", ".join("?" * len(bounty_ids)) or "NULL"
+    return [dict(r) for r in conn.execute(
+        f"SELECT * FROM events WHERE bounty_id IN ({marks}) OR (bounty_id IS NULL AND message = ?) "
+        "ORDER BY id DESC LIMIT ?", (*bounty_ids, f"PayPal email saved for {login}", limit))]
