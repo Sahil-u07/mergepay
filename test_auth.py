@@ -281,3 +281,20 @@ def test_revoked_github_token_asks_you_to_sign_in_again(env):
     app.oauth.repo = revoked
     r = connect(alice, "alice/app")
     assert r.status_code == 401 and "sign in again" in r.json()["detail"].lower()
+
+
+def test_github_sign_in_failures_are_logged_with_the_reason(env, caplog):
+    def refuse(code, redirect_uri):
+        raise auth.OAuthError("incorrect_client_credentials")
+    app.oauth.exchange = refuse
+    c = client()
+    state = c.get("/auth/login").cookies.get(auth.STATE_COOKIE) or c.cookies.get(auth.STATE_COOKIE)
+    with caplog.at_level("WARNING"):
+        r = c.get("/auth/callback", params={"code": "alice", "state": state})
+    assert r.headers["location"] == "/signin?error=github"
+    assert "incorrect_client_credentials" in caplog.text
+
+
+def test_oauth_credentials_are_trimmed():
+    o = auth.GitHubOAuth(" id-123 \n", "secret-456\r\n")
+    assert (o.client_id, o.client_secret) == ("id-123", "secret-456")

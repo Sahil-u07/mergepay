@@ -9,6 +9,7 @@ Run:  uvicorn app:app --reload
 import hashlib
 import hmac
 import json
+import logging
 import os
 import re
 import secrets
@@ -38,6 +39,7 @@ def require_login_method(oauth, password) -> None:
                            "or ADMIN_PASSWORD, or both.")
 
 
+log = logging.getLogger("mergepay")
 app = FastAPI(title="MergePay")
 conn = db.connect(os.environ.get("DB_PATH", "mergepay.db"))
 db.recover_interrupted(conn)  # nothing can be mid-review right after a (re)start
@@ -339,7 +341,10 @@ def callback(request: Request, code: str = "", state: str = "", error: str = "")
         token = oauth.exchange(code, redirect_uri)
         user = oauth.user(token)
         user_id = db.upsert_user(conn, int(user["id"]), user["login"], user.get("avatar_url"))
-    except (httpx.HTTPError, auth.OAuthError, KeyError, ValueError):
+    except (httpx.HTTPError, auth.OAuthError, KeyError, ValueError) as e:
+        # GitHub's reason (e.g. "incorrect_client_credentials") goes to the server log only;
+        # it holds no secrets, and it's what an operator needs to fix the setup.
+        log.warning("GitHub sign-in failed: %s: %s", type(e).__name__, e)
         return RedirectResponse("/signin?error=github")
     session = auth.new_token()
     now = time.time()

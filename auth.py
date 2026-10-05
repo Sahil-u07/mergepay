@@ -29,7 +29,8 @@ def token_hash(token: str) -> str:
 
 class GitHubOAuth:
     def __init__(self, client_id: str, client_secret: str, http: httpx.Client | None = None):
-        self.client_id, self.client_secret = client_id, client_secret
+        # Values pasted into a hosting dashboard often carry a stray space or newline.
+        self.client_id, self.client_secret = client_id.strip(), client_secret.strip()
         self.http = http or httpx.Client(timeout=15)
 
     def authorize_url(self, redirect_uri: str, state: str) -> str:
