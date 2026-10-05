@@ -1,3 +1,524 @@
 <!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark light">
 <title>MergePay</title>
-<p>MergePay is running.</p>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #020617; --card: #0E1223; --raised: #151B2E; --line: #1E293B; --line-strong: #334155;
+    --text: #F8FAFC; --muted: #94A3B8; --faint: #64748B;
+    --ok: #22C55E; --ok-fg: #4ADE80; --ok-bg: rgba(34,197,94,.12); --on-ok: #04210F;
+    --warn: #F59E0B; --warn-fg: #FCD34D; --warn-bg: rgba(245,158,11,.12);
+    --bad: #EF4444; --bad-fg: #FCA5A5; --bad-bg: rgba(239,68,68,.12);
+    --info: #38BDF8; --info-fg: #7DD3FC; --info-bg: rgba(56,189,248,.12);
+    --idle-fg: #CBD5E1; --idle-bg: #1E293B;
+    --focus: 0 0 0 2px var(--bg), 0 0 0 4px var(--info);
+    --sans: "IBM Plex Sans", system-ui, "Segoe UI", sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #F1F5F9; --card: #FFFFFF; --raised: #F8FAFC; --line: #E2E8F0; --line-strong: #CBD5E1;
+      --text: #0F172A; --muted: #475569; --faint: #64748B;
+      --ok: #15803D; --ok-fg: #166534; --ok-bg: #DCFCE7; --on-ok: #FFFFFF;
+      --warn: #B45309; --warn-fg: #92400E; --warn-bg: #FEF3C7;
+      --bad: #B91C1C; --bad-fg: #991B1B; --bad-bg: #FEE2E2;
+      --info: #0369A1; --info-fg: #075985; --info-bg: #E0F2FE;
+      --idle-fg: #334155; --idle-bg: #E2E8F0;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 var(--sans); }
+  a { color: inherit; text-decoration-color: var(--line-strong); text-underline-offset: 3px; }
+  a:hover { text-decoration-color: currentColor; }
+  :focus-visible { outline: none; box-shadow: var(--focus); border-radius: 6px; }
+  .mono { font-family: var(--mono); }
+  .icon { width: 18px; height: 18px; flex: none; stroke: currentColor; fill: none; stroke-width: 2;
+          stroke-linecap: round; stroke-linejoin: round; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+  .wrap { max-width: 1240px; margin: 0 auto; padding: 0 16px; }
+  header { border-bottom: 1px solid var(--line); background: var(--card); }
+  header .wrap { display: flex; align-items: center; gap: 14px; min-height: 64px; flex-wrap: wrap; padding-block: 10px; }
+  .brand { display: flex; align-items: center; gap: 10px; margin-right: auto; }
+  .logo { width: 34px; height: 34px; border-radius: 9px; background: var(--ok); color: var(--on-ok);
+          display: grid; place-items: center; }
+  .logo .icon { width: 20px; height: 20px; stroke-width: 2.5; }
+  .brand b { font-size: 18px; font-weight: 600; letter-spacing: -.01em; }
+  .brand small { display: block; color: var(--muted); font-size: 12.5px; line-height: 1.2; }
+  .pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 500;
+          padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
+  .pill.sandbox { background: var(--warn-bg); color: var(--warn-fg); }
+  .pill.livemoney { background: var(--bad); color: #fff; }
+  .pill.status { color: var(--muted); border: 1px solid var(--line); }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); }
+  .down .dot { background: var(--bad); }
+
+  main.wrap { padding-block: 20px 48px; }
+  .steps { list-style: none; margin: 0 0 16px; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+           gap: 8px; counter-reset: step; }
+  .steps li { display: flex; gap: 10px; align-items: center; background: var(--card); border: 1px solid var(--line);
+              border-radius: 10px; padding: 10px 12px; font-size: 13.5px; color: var(--muted); }
+  .steps li b { display: block; color: var(--text); font-weight: 500; }
+  .steps .icon { color: var(--info); }
+
+  .kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .kpi { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+  .kpi span { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; }
+  .kpi strong { display: block; margin-top: 6px; font: 500 24px/1.2 var(--mono); letter-spacing: -.02em;
+                overflow-wrap: anywhere; }
+  .kpi.money strong { color: var(--ok-fg); }
+  .kpi.attn strong { color: var(--warn-fg); }
+  .kpi.review strong { color: var(--info-fg); }
+
+  .grid { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 20px; align-items: start; }
+  .col { display: grid; gap: 20px; min-width: 0; }
+  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 18px; min-width: 0; }
+  .panel.attn { border-color: color-mix(in srgb, var(--warn) 55%, var(--line)); }
+  .panel-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+  .panel-head h2 { margin: 0; font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  .panel-head .count { font: 500 12.5px var(--mono); color: var(--muted); background: var(--raised);
+                       border: 1px solid var(--line); padding: 1px 8px; border-radius: 999px; }
+  .attn .panel-head h2 .icon { color: var(--warn); }
+  .panel-head p { margin: 0; color: var(--muted); font-size: 13.5px; flex-basis: 100%; }
+
+  .filters { display: flex; gap: 6px; flex-wrap: wrap; margin-left: auto; }
+  .filters button { min-height: 36px; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line);
+                    background: transparent; color: var(--muted); font: 500 13px var(--sans); cursor: pointer; }
+  .filters button:hover { color: var(--text); border-color: var(--line-strong); }
+  .filters button[aria-pressed="true"] { background: var(--text); color: var(--bg); border-color: var(--text); }
+
+  .list { display: grid; gap: 12px; }
+  .bounty { background: var(--raised); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; min-width: 0; }
+  .b-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .b-title { font: 500 14.5px var(--mono); overflow-wrap: anywhere; min-width: 0; }
+  .amount { margin-left: auto; font: 500 16px var(--mono); white-space: nowrap; }
+  .meta { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 8px; color: var(--muted); font-size: 13px; }
+  .meta span { display: inline-flex; align-items: center; gap: 6px; min-width: 0; overflow-wrap: anywhere; }
+  .meta .icon { width: 15px; height: 15px; }
+  .badge { font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; white-space: nowrap;
+           display: inline-flex; align-items: center; gap: 5px; }
+  .badge .icon { width: 13px; height: 13px; stroke-width: 2.5; }
+  .s-open { background: var(--idle-bg); color: var(--idle-fg); }
+  .s-paying, .s-sent { background: var(--info-bg); color: var(--info-fg); }
+  .s-paid { background: var(--ok-bg); color: var(--ok-fg); }
+  .s-needs_approval { background: var(--warn-bg); color: var(--warn-fg); }
+  .s-rejected, .s-failed { background: var(--bad-bg); color: var(--bad-fg); }
+
+  .flag { display: flex; gap: 10px; align-items: flex-start; margin-top: 12px; padding: 10px 12px; border-radius: 10px;
+          background: var(--bad-bg); color: var(--bad-fg); font-weight: 500; font-size: 14px; }
+  .verdict { margin-top: 12px; padding: 12px 14px; border-radius: 10px; background: var(--card);
+             border: 1px solid var(--line); border-left: 3px solid var(--ok); font-size: 14px; }
+  .verdict.no { border-left-color: var(--bad); }
+  .verdict.unsure { border-left-color: var(--warn); }
+  .v-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; font-size: 12.5px; }
+  .v-head .who { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-weight: 500;
+                 text-transform: uppercase; letter-spacing: .06em; }
+  .v-head .who .icon { width: 15px; height: 15px; color: var(--info); }
+  .v-yes { color: var(--ok-fg); font-weight: 600; } .v-no { color: var(--bad-fg); font-weight: 600; }
+  .conf { color: var(--muted); }
+  .verdict p { margin: 0; overflow-wrap: anywhere; }
+  .concerns, .reasons { margin: 8px 0 0; padding-left: 18px; font-size: 13.5px; }
+  .concerns { color: var(--muted); }
+  .reasons { color: var(--warn-fg); }
+  .reasons-title { margin: 12px 0 0; font-size: 12.5px; font-weight: 600; color: var(--warn-fg); text-transform: uppercase; letter-spacing: .06em; }
+
+  .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+  button.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px;
+               padding: 10px 16px; border-radius: 10px; border: 1px solid var(--line-strong); background: transparent;
+               color: var(--text); font: 600 14px var(--sans); cursor: pointer;
+               transition: background-color .15s, border-color .15s, transform .1s; }
+  button.btn:hover { background: var(--raised); border-color: var(--muted); }
+  button.btn:active { transform: translateY(1px); }
+  button.btn.primary { background: var(--ok); border-color: var(--ok); color: var(--on-ok); }
+  button.btn.primary:hover { filter: brightness(1.08); }
+  button.btn.danger { border-color: var(--bad); color: var(--bad-fg); }
+  button.btn.danger.solid { background: var(--bad); color: #fff; }
+  button.btn[aria-busy="true"] { opacity: .7; cursor: progress; }
+
+  form { display: grid; gap: 12px; }
+  .field { display: grid; gap: 6px; min-width: 0; }
+  .field label { font-size: 13px; font-weight: 500; color: var(--muted); }
+  .row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 84px; gap: 10px; }
+  input, select { width: 100%; min-height: 44px; padding: 9px 12px; border-radius: 10px; border: 1px solid var(--line-strong);
+                  background: var(--raised); color: var(--text); font: 15px var(--sans); }
+  input::placeholder { color: var(--faint); }
+  input:focus-visible, select:focus-visible { border-color: var(--info); border-radius: 10px; }
+  .hint { margin: 0; color: var(--faint); font-size: 12.5px; }
+  .msg { margin: 0; font-size: 13.5px; min-height: 0; }
+  .msg:empty { display: none; }
+  .msg.ok { color: var(--ok-fg); } .msg.bad { color: var(--bad-fg); }
+
+  .log { list-style: none; margin: 0; padding: 0; max-height: 520px; overflow: auto; }
+  .log li { position: relative; padding: 0 0 14px 22px; font-size: 13.5px; overflow-wrap: anywhere; }
+  .log li::before { content: ""; position: absolute; left: 4px; top: 7px; width: 8px; height: 8px; border-radius: 50%;
+                    background: var(--line-strong); }
+  .log li::after { content: ""; position: absolute; left: 7.5px; top: 18px; bottom: 2px; width: 1px; background: var(--line); }
+  .log li:last-child::after { display: none; }
+  .log li.k-paid::before { background: var(--ok); }
+  .log li.k-warn::before { background: var(--warn); }
+  .log li.k-bad::before { background: var(--bad); }
+  .log li.k-ai::before { background: var(--info); }
+  .log time { display: block; color: var(--faint); font: 12px var(--mono); }
+
+  .empty { text-align: center; padding: 28px 16px; color: var(--muted); border: 1px dashed var(--line-strong); border-radius: 12px; }
+  .empty .icon { width: 28px; height: 28px; color: var(--faint); }
+  .empty strong { display: block; color: var(--text); margin: 6px 0 2px; font-weight: 600; }
+
+  footer { color: var(--faint); font-size: 12.5px; text-align: center; padding: 0 16px 28px; }
+
+  @media (max-width: 1023px) {
+    .grid { grid-template-columns: minmax(0, 1fr); }
+    .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 520px) {
+    .steps { display: none; }
+    .kpi strong { font-size: 20px; }
+    .row { grid-template-columns: minmax(0, 1fr) 84px; }
+    .row .field:first-child { grid-column: 1 / -1; }
+    .amount { margin-left: 0; }
+    .filters { margin-left: 0; }
+    .actions .btn { flex: 1 1 auto; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="brand">
+      <div class="logo" aria-hidden="true"><span data-icon="merge"></span></div>
+      <div><b>MergePay</b><small>Bounties without the spam</small></div>
+    </div>
+    <span id="mode" class="pill sandbox" title="Payouts go to the PayPal sandbox. No real money moves.">PayPal sandbox</span>
+    <span id="live" class="pill status" role="status"><span class="dot"></span><span id="liveText">Connecting</span></span>
+  </div>
+</header>
+
+<main class="wrap">
+  <h1 class="sr-only">MergePay maintainer dashboard</h1>
+  <ol class="steps" aria-label="How MergePay works">
+    <li><span data-icon="plus"></span><span><b>Post a bounty</b>on any GitHub issue</span></li>
+    <li><span data-icon="merge"></span><span><b>Merge the fix</b>PR says "Fixes #N"</span></li>
+    <li><span data-icon="sparkles"></span><span><b>AI checks it</b>and flags anything fishy</span></li>
+    <li><span data-icon="wallet"></span><span><b>PayPal pays</b>or it waits for your OK</span></li>
+  </ol>
+
+  <section class="kpis" aria-label="Totals">
+    <div class="kpi money"><span><span data-icon="wallet"></span>Paid out</span><strong id="stPaid">0.00</strong></div>
+    <div class="kpi attn"><span><span data-icon="alert"></span>Needs you</span><strong id="stAttn">0</strong></div>
+    <div class="kpi review"><span><span data-icon="sparkles"></span>In review</span><strong id="stReview">0</strong></div>
+    <div class="kpi"><span><span data-icon="inbox"></span>Open bounties</span><strong id="stOpen">0</strong></div>
+  </section>
+
+  <div class="grid">
+    <div class="col">
+      <section class="panel attn" id="attnCard" hidden aria-labelledby="attnTitle">
+        <div class="panel-head">
+          <h2 id="attnTitle"><span data-icon="alert"></span>Needs your decision</h2>
+          <span class="count" id="attnCount">0</span>
+          <p>The AI was unsure, the bounty is over the auto-pay limit, or something looked fishy. Nothing is paid until you choose.</p>
+        </div>
+        <div class="list" id="attnList"></div>
+      </section>
+
+      <section class="panel" aria-labelledby="listTitle">
+        <div class="panel-head">
+          <h2 id="listTitle">Bounties</h2>
+          <span class="count" id="allCount">0</span>
+          <div class="filters" role="group" aria-label="Filter bounties">
+            <button type="button" data-f="all" aria-pressed="true">All</button>
+            <button type="button" data-f="open" aria-pressed="false">Open</button>
+            <button type="button" data-f="paying" aria-pressed="false">In review</button>
+            <button type="button" data-f="paid" aria-pressed="false">Paid</button>
+            <button type="button" data-f="rejected" aria-pressed="false">Rejected</button>
+          </div>
+        </div>
+        <p class="msg" id="listMsg" role="status"></p>
+        <div class="list" id="list"></div>
+      </section>
+    </div>
+
+    <div class="col">
+      <section class="panel" aria-labelledby="newTitle">
+        <div class="panel-head"><h2 id="newTitle">New bounty</h2></div>
+        <form id="bountyForm" novalidate>
+          <div class="field">
+            <label for="fRepo">Repository</label>
+            <input id="fRepo" name="repo" placeholder="owner/name" autocomplete="off" required spellcheck="false">
+          </div>
+          <div class="row">
+            <div class="field"><label for="fIssue">Issue number</label>
+              <input id="fIssue" name="issue" inputmode="numeric" placeholder="12" required></div>
+            <div class="field"><label for="fAmount">Amount</label>
+              <input id="fAmount" name="amount" inputmode="decimal" placeholder="40.00" required></div>
+            <div class="field"><label for="fCur">Currency</label>
+              <select id="fCur" name="currency"><option>USD</option><option>EUR</option><option>GBP</option></select></div>
+          </div>
+          <button class="btn primary" type="submit"><span data-icon="plus"></span>Add bounty</button>
+          <p class="msg" id="bountyMsg" role="status"></p>
+        </form>
+      </section>
+
+      <section class="panel" aria-labelledby="emailTitle">
+        <div class="panel-head"><h2 id="emailTitle">Contributor PayPal email</h2></div>
+        <form id="contribForm" novalidate>
+          <div class="field"><label for="fLogin">GitHub username</label>
+            <input id="fLogin" name="github_login" placeholder="octocat" autocomplete="off" required spellcheck="false"></div>
+          <div class="field"><label for="fEmail">PayPal email</label>
+            <input id="fEmail" name="paypal_email" type="email" placeholder="name@example.com" required></div>
+          <button class="btn" type="submit"><span data-icon="mail"></span>Save email</button>
+          <p class="hint">Payouts go to this email when the contributor's PR is merged.</p>
+          <p class="msg" id="contribMsg" role="status"></p>
+        </form>
+      </section>
+
+      <section class="panel" aria-labelledby="logTitle">
+        <div class="panel-head"><h2 id="logTitle"><span data-icon="activity"></span>Activity</h2></div>
+        <ol class="log" id="log"></ol>
+      </section>
+    </div>
+  </div>
+</main>
+<footer>Money rules live in code, not in the AI: spending limit, maintainer approval and one payment per bounty.</footer>
+<div class="sr-only" aria-live="polite" id="announce"></div>
+
+<script>
+// Everything from the server goes into the page with textContent: PR titles, verdicts and
+// usernames can come from GitHub users, so they must never be parsed as HTML.
+const $ = id => document.getElementById(id);
+let bounties = [], filter = "all", lastStatus = {}, timer;
+
+// Icons: Lucide-style outlines, built as SVG nodes.
+const ICONS = {
+  merge: [["circle", 18, 18, 3], ["circle", 6, 6, 3], ["path", "M6 21V9a9 9 0 0 0 9 9"]],
+  pr: [["circle", 18, 18, 3], ["circle", 6, 6, 3], ["path", "M13 6h3a2 2 0 0 1 2 2v7M6 9v12"]],
+  plus: [["path", "M5 12h14M12 5v14"]],
+  check: [["path", "M20 6 9 17l-5-5"]],
+  x: [["path", "M18 6 6 18M6 6l12 12"]],
+  alert: [["path", "m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3ZM12 9v4M12 17h.01"]],
+  shield: [["path", "M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1zM12 8v4M12 16h.01"]],
+  wallet: [["path", "M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"]],
+  sparkles: [["path", "M9.94 15.5A2 2 0 0 0 8.5 14.06l-6.14-1.58a.5.5 0 0 1 0-.96L8.5 9.94A2 2 0 0 0 9.94 8.5l1.58-6.14a.5.5 0 0 1 .96 0l1.58 6.14a2 2 0 0 0 1.44 1.44l6.14 1.58a.5.5 0 0 1 0 .96l-6.14 1.58a2 2 0 0 0-1.44 1.44l-1.58 6.14a.5.5 0 0 1-.96 0z"]],
+  inbox: [["path", "M22 12h-6l-2 3h-4l-2-3H2M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"]],
+  user: [["circle", 12, 7, 4], ["path", "M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"]],
+  mail: [["rect", 2, 4, 20, 16, 2], ["path", "m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"]],
+  activity: [["path", "M22 12h-4l-3 9L9 3l-3 9H2"]],
+  receipt: [["path", "M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1ZM16 8H8M16 12H8M13 16H8"]],
+  undo: [["path", "M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8M3 3v5h5"]],
+  clock: [["circle", 12, 12, 10], ["path", "M12 6v6l4 2"]],
+};
+function icon(name) {
+  const ns = "http://www.w3.org/2000/svg", svg = document.createElementNS(ns, "svg");
+  svg.setAttribute("viewBox", "0 0 24 24"); svg.setAttribute("class", "icon"); svg.setAttribute("aria-hidden", "true");
+  for (const [tag, ...a] of ICONS[name]) {
+    const s = document.createElementNS(ns, tag);
+    const attrs = {path: ["d"], circle: ["cx", "cy", "r"], rect: ["x", "y", "width", "height", "rx"]}[tag];
+    attrs.forEach((k, i) => s.setAttribute(k, a[i]));
+    svg.append(s);
+  }
+  return svg;
+}
+document.querySelectorAll("[data-icon]").forEach(n => n.replaceWith(icon(n.dataset.icon)));
+
+async function api(path, body) {
+  const r = await fetch(path, body === undefined ? {} : {
+    method: "POST", headers: {"Content-Type": "application/json", "X-MergePay": "1"}, body: JSON.stringify(body)});
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(typeof data.detail === "string" ? data.detail : "Check the form and try again.");
+  return data;
+}
+
+function el(tag, props = {}, ...kids) {
+  const e = Object.assign(document.createElement(tag), props);
+  e.append(...kids.filter(k => k !== null && k !== undefined && k !== false));
+  return e;
+}
+const link = (text, href) => el("a", {textContent: text, href, target: "_blank", rel: "noopener"});
+const say = (node, kind, text) => { node.className = "msg " + kind; node.textContent = text; };
+const money = (amount, currency) => {
+  try { return new Intl.NumberFormat(undefined, {style: "currency", currency}).format(Number(amount)); }
+  catch { return `${amount} ${currency}`; }
+};
+const STATUS = {open: "Open", paying: "In review", paid: "Delivered", needs_approval: "Needs approval",
+                rejected: "Rejected", failed: "Payout failed"};
+const PAYOUT = {PENDING: "PayPal is processing the payout", UNCLAIMED: "Waiting for the contributor to accept it in PayPal",
+                ONHOLD: "PayPal put the payout on hold"};
+function badge(b) {
+  const sent = b.status === "paid" && b.payout_status !== "SUCCESS";
+  const cls = sent ? "s-sent" : "s-" + b.status;
+  const ic = {paid: "check", paying: "sparkles", needs_approval: "alert", rejected: "x", failed: "x", open: "clock"}[b.status];
+  return el("span", {className: "badge " + cls}, icon(sent ? "check" : ic), sent ? "Sent to PayPal" : STATUS[b.status] || b.status);
+}
+
+function button(content, cls, onclick) {
+  const b = el("button", {type: "button", className: "btn " + cls}, ...content);
+  b.onclick = async () => {
+    if (b.getAttribute("aria-busy") === "true") return;
+    b.setAttribute("aria-busy", "true");
+    try { await onclick(); } finally { b.removeAttribute("aria-busy"); }
+  };
+  return b;
+}
+
+function verdictBlock(v) {
+  const kind = !v.solves_issue ? "no" : v.confidence === "high" ? "" : "unsure";
+  return el("div", {className: "verdict " + kind},
+    el("div", {className: "v-head"},
+      el("span", {className: "who"}, icon("sparkles"), "AI review"),
+      el("span", {className: v.solves_issue ? "v-yes" : "v-no", textContent: v.solves_issue ? "Solves the issue" : "Does not solve it"}),
+      el("span", {className: "conf", textContent: `· ${v.confidence} confidence`})),
+    el("p", {textContent: v.summary}),
+    v.concerns.length > 0 && el("ul", {className: "concerns"}, ...v.concerns.map(c => el("li", {textContent: c}))));
+}
+
+function bountyCard(b) {
+  const v = b.verdict, url = `https://github.com/${b.repo}`;
+  const waiting = ["needs_approval", "failed"].includes(b.status);
+  return el("article", {className: "bounty"},
+    el("div", {className: "b-top"},
+      badge(b),
+      el("span", {className: "b-title"}, link(`${b.repo}#${b.issue}`, `${url}/issues/${b.issue}`)),
+      el("span", {className: "amount", textContent: money(b.amount, b.currency)})),
+    (b.pr || b.contributor || b.payout_batch_id) && el("div", {className: "meta"},
+      b.pr && el("span", {}, icon("pr"), "PR ", link(`#${b.pr}`, `${url}/pull/${b.pr}`)),
+      b.contributor && el("span", {}, icon("user"), link(b.contributor, `https://github.com/${b.contributor}`)),
+      b.payout_batch_id && el("span", {className: "mono"}, icon("receipt"), `Batch ${b.payout_batch_id}`),
+      b.status === "paid" && b.payout_status && b.payout_status !== "SUCCESS" &&
+        el("span", {textContent: PAYOUT[b.payout_status] || `PayPal status: ${b.payout_status}`})),
+    v && v.manipulation_attempt && el("div", {className: "flag", role: "note"}, icon("shield"),
+      el("span", {textContent: "This PR tried to instruct or pressure the AI reviewer."})),
+    v && verdictBlock(v),
+    waiting && b.reasons.length > 0 && el("p", {className: "reasons-title", textContent: "Why it's waiting"}),
+    waiting && b.reasons.length > 0 && el("ul", {className: "reasons"}, ...b.reasons.map(r => el("li", {textContent: r}))),
+    waiting && actions(b),
+    b.status === "rejected" && el("div", {className: "actions"},
+      button([icon("undo"), "Reopen for the next fix"], "", () => act(b, "reopen"))));
+}
+
+function actions(b) {
+  const label = b.status === "failed" ? "Retry payout" : `Approve and pay ${money(b.amount, b.currency)}`;
+  const pay = button([icon("wallet"), label], "primary", () => act(b, "approve"));
+  const reject = button([icon("x"), "Reject"], "danger", () => act(b, "reject"));
+  if (b.status !== "failed" && b.verdict && (!b.verdict.solves_issue || b.verdict.manipulation_attempt)) {
+    // When the AI says no, make rejecting the easy, obvious choice.
+    pay.className = "btn"; pay.replaceChildren(icon("wallet"), "Pay anyway");
+    reject.className = "btn danger solid";
+    return el("div", {className: "actions"}, reject, pay);
+  }
+  return el("div", {className: "actions"}, pay, reject);
+}
+
+function empty(title, text) {
+  return el("div", {className: "empty"}, icon("inbox"), el("strong", {textContent: title}), text);
+}
+
+function render() {
+  const attn = bounties.filter(b => ["needs_approval", "failed"].includes(b.status));
+  const totals = {};
+  bounties.filter(b => b.status === "paid").forEach(b => totals[b.currency] = (totals[b.currency] || 0) + Number(b.amount));
+  $("stPaid").textContent = Object.keys(totals).length
+    ? Object.entries(totals).map(([c, n]) => money(n, c)).join(" · ") : money(0, "USD");
+  $("stAttn").textContent = attn.length;
+  $("stReview").textContent = bounties.filter(b => b.status === "paying").length;
+  $("stOpen").textContent = bounties.filter(b => b.status === "open").length;
+
+  $("attnCard").hidden = attn.length === 0;
+  $("attnCount").textContent = attn.length;
+  $("attnList").replaceChildren(...attn.map(bountyCard));
+
+  // Bounties waiting for a decision already have their own section above.
+  const rest = bounties.filter(b => !attn.includes(b));
+  const shown = rest.filter(b => filter === "all" || b.status === filter);
+  $("allCount").textContent = rest.length;
+  $("list").replaceChildren(...(shown.length ? shown.map(bountyCard)
+    : [bounties.length ? empty("Nothing with this status", "Pick another filter to see the rest.")
+                       : empty("Post your first bounty", "Add one with the form. It's paid when a PR that fixes the issue is merged.")]));
+}
+
+function announceChanges() {
+  const changes = [];
+  for (const b of bounties) {
+    if (lastStatus[b.id] && lastStatus[b.id] !== b.status) changes.push(`${b.repo}#${b.issue}: ${STATUS[b.status] || b.status}`);
+    lastStatus[b.id] = b.status;
+  }
+  if (changes.length) $("announce").textContent = changes.join(". ");
+}
+
+function logKind(m) {
+  if (/^Paid /.test(m)) return "k-paid";
+  if (/failed|Rejected|could not/i.test(m)) return "k-bad";
+  if (/Sent to maintainer/i.test(m)) return "k-warn";
+  if (/^AI review/.test(m)) return "k-ai";
+  return "";
+}
+
+async function act(b, action) {
+  if (action === "approve" && !confirm(`Pay ${money(b.amount, b.currency)} to ${b.contributor} (${b.paypal_email || "no PayPal email saved"}) through PayPal?`)) return;
+  try {
+    await api(`/api/bounties/${b.id}/${action}`, {});
+    say($("listMsg"), "ok", {approve: "Payout sent for", reject: "Rejected", reopen: "Reopened"}[action] + ` ${b.repo}#${b.issue}.`);
+  } catch (e) { say($("listMsg"), "bad", e.message); }
+  await refresh();
+}
+
+async function refresh() {
+  clearTimeout(timer);
+  try {
+    const [bs, events] = await Promise.all([api("/api/bounties"), api("/api/events")]);
+    bounties = bs;
+    render();
+    announceChanges();
+    $("log").replaceChildren(...(events.length ? events.map(e => el("li", {className: logKind(e.message)},
+      el("time", {textContent: new Date(e.at.replace(" ", "T") + "Z").toLocaleString([], {dateStyle: "medium", timeStyle: "short"})}),
+      e.message)) : [el("li", {textContent: "Nothing yet. Actions and payouts show up here."})]));
+    $("live").classList.remove("down"); $("liveText").textContent = "Live";
+  } catch (e) {
+    $("live").classList.add("down"); $("liveText").textContent = "Offline";
+  }
+  // Poll fast while a review or payout is running, slowly otherwise.
+  timer = setTimeout(refresh, bounties.some(b => b.status === "paying") ? 4000 : 15000);
+}
+
+document.querySelectorAll(".filters button").forEach(btn => btn.onclick = () => {
+  filter = btn.dataset.f;
+  document.querySelectorAll(".filters button").forEach(x => x.setAttribute("aria-pressed", x === btn));
+  render();
+});
+
+function onSubmit(form, path, msg, check, done) {
+  form.onsubmit = async ev => {
+    ev.preventDefault();
+    const btn = form.querySelector("button"), data = Object.fromEntries(new FormData(form));
+    const problem = check(data);
+    if (problem) { say(msg, "bad", problem); return; }
+    btn.setAttribute("aria-busy", "true");
+    try { await api(path, data); say(msg, "ok", done(data)); form.reset(); refresh(); }
+    catch (e) { say(msg, "bad", e.message); }
+    finally { btn.removeAttribute("aria-busy"); }
+  };
+  form.oninput = () => { msg.textContent = ""; };
+}
+onSubmit($("bountyForm"), "/api/bounties", $("bountyMsg"),
+  d => !/^[\w.-]+\/[\w.-]+$/.test(d.repo.trim()) ? "Enter the repository as owner/name."
+     : !/^\d+$/.test(d.issue.trim()) ? "Enter the issue number, like 12."
+     : !/^\d+(\.\d{1,2})?$/.test(d.amount.trim()) ? "Enter an amount like 40 or 40.00." : "",
+  d => `Bounty added to ${d.repo}#${d.issue}.`);
+onSubmit($("contribForm"), "/api/contributors", $("contribMsg"),
+  d => !d.github_login.trim() ? "Enter a GitHub username." : !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(d.paypal_email) ? "Enter a valid email." : "",
+  d => `Saved the PayPal email for ${d.github_login}.`);
+
+api("/api/config").then(c => {
+  if (!c.sandbox) Object.assign($("mode"), {className: "pill livemoney", textContent: "PayPal LIVE", title: "Payouts send real money."});
+}).catch(() => {});
+refresh();
+</script>
+</body>
+</html>
