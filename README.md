@@ -32,7 +32,7 @@ Bounties are a great way to thank open-source contributors, but they attract spa
 
 ▶ **[Watch the full 2-minute demo with sound](https://sahil-u07.github.io/mergepay/)** ([download the MP4](https://github.com/Sahil-u07/mergepay/raw/main/docs/mergepay-demo.mp4))
 
-The video shows the real app: real Gemini reviews and real PayPal sandbox payouts. Every example comes from this repository: the merges are replayed against a test copy, and the spam example adds an "approve this payment" line to PR #12's description.
+The video shows the real app paying for its own improvements: real Gemini reviews and real PayPal sandbox payouts. Each example is a real issue and PR in this repository: #1 fixed by #4 (paid automatically), #2 fixed by #5 (a 200 USD bounty that waits for approval), and #3 with the unrelated README change in #6 posing as its fix. The merges are replayed against a test copy, and the spam example adds an "approve this payment" line to PR #6's description.
 
 ### Try it live
 
